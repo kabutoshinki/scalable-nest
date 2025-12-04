@@ -1,0 +1,102 @@
+services:
+  api1:
+    image: scalable-nest-api:${IMAGE_TAG}
+    env_file: .env
+    depends_on:
+      - postgres
+      - redis-sentinel-1
+    networks:
+      - app-net
+
+  api2:
+    image: scalable-nest-api:${IMAGE_TAG}
+    env_file: .env
+    depends_on:
+      - postgres
+      - redis-sentinel-1
+    networks:
+      - app-net
+
+  nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - api1
+      - api2
+    networks:
+      - app-net
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: appdb
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    networks:
+      - app-net
+
+  redis-master:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "redispass"]
+    networks:
+      - app-net
+
+  redis-replica-1:
+    image: redis:7-alpine
+    command:
+      ["redis-server", "--replicaof", "redis-master", "6379", "--requirepass", "redispass", "--masterauth", "redispass"]
+    depends_on: [redis-master]
+    networks:
+      - app-net
+
+  redis-replica-2:
+    image: redis:7-alpine
+    command:
+      ["redis-server", "--replicaof", "redis-master", "6379", "--requirepass", "redispass", "--masterauth", "redispass"]
+    depends_on: [redis-master]
+    networks:
+      - app-net
+
+  redis-sentinel-1:
+    image: bitnami/redis-sentinel:latest
+    environment:
+      REDIS_SENTINEL_QUORUM: 2
+      REDIS_SENTINEL_MASTER_NAME: mymaster
+      REDIS_SENTINEL_MASTER_HOST: redis-master
+      REDIS_SENTINEL_MASTER_PORT_NUMBER: 6379
+      REDIS_SENTINEL_PASSWORD: redispass
+    networks:
+      - app-net
+
+  redis-sentinel-2:
+    image: bitnami/redis-sentinel:latest
+    environment:
+      REDIS_SENTINEL_QUORUM: 2
+      REDIS_SENTINEL_MASTER_NAME: mymaster
+      REDIS_SENTINEL_MASTER_HOST: redis-master
+      REDIS_SENTINEL_MASTER_PORT_NUMBER: 6379
+      REDIS_SENTINEL_PASSWORD: redispass
+    networks:
+      - app-net
+
+  redis-sentinel-3:
+    image: bitnami/redis-sentinel:latest
+    environment:
+      REDIS_SENTINEL_QUORUM: 2
+      REDIS_SENTINEL_MASTER_NAME: mymaster
+      REDIS_SENTINEL_MASTER_HOST: redis-master
+      REDIS_SENTINEL_MASTER_PORT_NUMBER: 6379
+      REDIS_SENTINEL_PASSWORD: redispass
+    networks:
+      - app-net
+
+networks:
+  app-net:
+
+volumes:
+  pg_data:
