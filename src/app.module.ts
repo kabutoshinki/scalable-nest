@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TerminusModule } from '@nestjs/terminus';
@@ -5,13 +6,14 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { CacheModule } from '@nestjs/cache-manager';
 import { redisStore } from 'cache-manager-ioredis-yet';
 import { BullModule as BullMQModule } from '@nestjs/bullmq';
+import { AppService } from './app.service';
+import { HealthController } from './app.controller';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }), // đọc .env
     TerminusModule, // /health
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 100 }]),
-
     // Redis cache
     CacheModule.registerAsync({
       isGlobal: true,
@@ -21,9 +23,18 @@ import { BullModule as BullMQModule } from '@nestjs/bullmq';
           // trỏ vào Redis Sentinel thay vì 1 node đơn
           sentinel: {
             sentinels: [
-              { host: cfg.get('REDIS_SENTINEL_1_HOST'), port: cfg.get<number>('REDIS_SENTINEL_1_PORT') },
-              { host: cfg.get('REDIS_SENTINEL_2_HOST'), port: cfg.get<number>('REDIS_SENTINEL_2_PORT') },
-              { host: cfg.get('REDIS_SENTINEL_3_HOST'), port: cfg.get<number>('REDIS_SENTINEL_3_PORT') },
+              {
+                host: cfg.get('REDIS_SENTINEL_1_HOST'),
+                port: cfg.get<number>('REDIS_SENTINEL_1_PORT'),
+              },
+              {
+                host: cfg.get('REDIS_SENTINEL_2_HOST'),
+                port: cfg.get<number>('REDIS_SENTINEL_2_PORT'),
+              },
+              {
+                host: cfg.get('REDIS_SENTINEL_3_HOST'),
+                port: cfg.get<number>('REDIS_SENTINEL_3_PORT'),
+              },
             ],
             name: cfg.get('REDIS_MASTER_NAME'), // mặc định "mymaster"
           },
@@ -40,9 +51,18 @@ import { BullModule as BullMQModule } from '@nestjs/bullmq';
         connection: {
           sentinel: {
             sentinels: [
-              { host: cfg.get('REDIS_SENTINEL_1_HOST'), port: cfg.get<number>('REDIS_SENTINEL_1_PORT') },
-              { host: cfg.get('REDIS_SENTINEL_2_HOST'), port: cfg.get<number>('REDIS_SENTINEL_2_PORT') },
-              { host: cfg.get('REDIS_SENTINEL_3_HOST'), port: cfg.get<number>('REDIS_SENTINEL_3_PORT') },
+              {
+                host: cfg.get('REDIS_SENTINEL_1_HOST'),
+                port: cfg.get<number>('REDIS_SENTINEL_1_PORT'),
+              },
+              {
+                host: cfg.get('REDIS_SENTINEL_2_HOST'),
+                port: cfg.get<number>('REDIS_SENTINEL_2_PORT'),
+              },
+              {
+                host: cfg.get('REDIS_SENTINEL_3_HOST'),
+                port: cfg.get<number>('REDIS_SENTINEL_3_PORT'),
+              },
             ],
             name: cfg.get('REDIS_MASTER_NAME'),
           },
@@ -52,5 +72,7 @@ import { BullModule as BullMQModule } from '@nestjs/bullmq';
       }),
     }),
   ],
+  controllers: [HealthController],
+  providers: [AppService],
 })
 export class AppModule {}
