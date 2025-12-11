@@ -4,6 +4,8 @@
     
     # 1) Cài deps
     COPY package.json yarn.lock ./
+    # Ensure Yarn v1 is available (corepack in Node 20 may not activate it by default)
+    RUN corepack enable && corepack prepare yarn@1.22.22 --activate
     RUN yarn install --frozen-lockfile
     
     # 2) Copy code và prisma
@@ -31,5 +33,5 @@
     COPY package.json ./
     
     EXPOSE 3000
-    CMD ["node", "dist/main.js"]
+    CMD ["node", "dist/src/main.js"]
     
